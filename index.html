@@ -248,6 +248,7 @@ code{background:rgba(0,180,216,.14);padding:1px 5px;border-radius:4px;font-size:
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────
+const SCRIPT_URL     = 'https://script.google.com/macros/s/AKfycbyM3B_GG1Lc-_LPjFAdCY9ixSpa1lLPa8DVREHiAURDVclEd_pKoYOx5t7ybPqfQPEl/exec';
 const SHEET_ID       = '1wwSfGPBj4ygdMnZqrR_pr7-dLj5fO7SoeYT0xdDF7Lw';
 const SHEET_FUEL     = 'Combustivel';
 const MAINT_SHEET_ID = '1jPNFburs7qeOcCHwELg5tC6nROVUjEpc0SDz3BEUzY4';
@@ -305,21 +306,13 @@ function animCount(el, target, currency=false) {
   requestAnimationFrame(step);
 }
 
-// ── GOOGLE SHEETS ────────────────────────────────────────
+// ── GOOGLE SHEETS via Apps Script (sem cache) ────────────
 async function fetchSheetFrom(sheetId, name) {
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(name)}&t=${Date.now()}`;
+  const url = `${SCRIPT_URL}?id=${sheetId}&sheet=${encodeURIComponent(name)}&t=${Date.now()}`;
   const res  = await fetch(url);
-  const text = await res.text();
-  const m    = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
-  if(!m) throw new Error('bad response');
-  const j = JSON.parse(m[1]);
-  if(j.status==='error'||!j.table?.rows?.length) return [];
-  const {cols,rows} = j.table;
-  return rows.map(row => {
-    const o={};
-    cols.forEach((c,i)=>{ o[c.label||c.id] = row.c?.[i]?.v??null; });
-    return o;
-  });
+  const data = await res.json();
+  if(!Array.isArray(data)) throw new Error(data?.error || 'bad response');
+  return data;
 }
 const fetchSheet = name => fetchSheetFrom(SHEET_ID, name);
 
