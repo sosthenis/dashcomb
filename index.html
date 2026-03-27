@@ -412,13 +412,15 @@ async function loadData() {
   const btn=$('#rBtn'); btn.classList.add('spin'); $('#rLbl').textContent='Buscando...';
 
   // ── Combustível: 12 abas mensais de "ALDO ANUAL frotas geope 2026"
-  let fuel = [], fuelOk = false;
+  let fuel = [], fuelReachable = false;
   try {
     const fResults = await Promise.allSettled(
       MONTH_TABS.map((tab, i) =>
         fetchSheetFrom(FUEL_SHEET_ID, tab).then(rows => ({ rows, month: i+1 }))
       )
     );
+    // Se pelo menos 1 aba respondeu (mesmo vazia) = planilha acessível
+    fuelReachable = fResults.some(r => r.status === 'fulfilled');
     const seenF = new Map();
     fResults.forEach(r => {
       if(r.status !== 'fulfilled') return;
@@ -430,17 +432,17 @@ async function loadData() {
         if(!seenF.has(key)) { seenF.set(key, true); fuel.push(ev); }
       });
     });
-    if(fuel.length) fuelOk = true;
-  } catch(e) { /* fallback */ }
+  } catch(e) { /* sem acesso */ }
 
   // ── Manutenção: 12 abas mensais de "RELAÇÃO DE VEÍCULOS NA OFICINA GEOPE 2026"
-  let maint = [], maintOk = false;
+  let maint = [], maintReachable = false;
   try {
     const mResults = await Promise.allSettled(
       MONTH_TABS.map((tab, i) =>
         fetchSheetFrom(MAINT_SHEET_ID, tab).then(rows => ({ rows, month: i+1 }))
       )
     );
+    maintReachable = mResults.some(r => r.status === 'fulfilled');
     const seenM = new Map();
     mResults.forEach(r => {
       if(r.status !== 'fulfilled') return;
@@ -452,25 +454,21 @@ async function loadData() {
         if(!seenM.has(key)) { seenM.set(key, true); maint.push(ev); }
       });
     });
-    if(maint.length) maintOk = true;
-  } catch(e) { /* fallback */ }
+  } catch(e) { /* sem acesso */ }
 
-  if(!fuelOk && !maintOk) {
+  if(!fuelReachable && !maintReachable) {
+    // Sem acesso a nenhuma planilha → demo com aviso
     DATA={fuelRecords:DEMO_FUEL,maintenanceEvents:DEMO_MAINT,...buildAgg(DEMO_FUEL,DEMO_MAINT)};
     fromSheets=false;
-    setStatus('demo','Dados demo · verifique conexão com o Sheets');
-    $('#dSrc').textContent='Demonstração — verifique se as planilhas estão públicas';
+    setStatus('demo','Sem conexão · exibindo dados demo');
+    $('#dSrc').textContent='Verifique se as planilhas estão públicas e o script está ativo';
   } else {
-    if(!fuelOk)  fuel  = DEMO_FUEL;
-    if(!maintOk) maint = DEMO_MAINT;
+    // Planilhas acessíveis — usa o que veio (pode ser vazio se apagou os dados)
     DATA={fuelRecords:fuel,maintenanceEvents:maint,...buildAgg(fuel,maint)};
-    fromSheets = fuelOk || maintOk;
+    fromSheets=true;
     const now=new Date().toLocaleString('pt-BR');
-    const src = fuelOk && maintOk ? 'Ao vivo'
-              : fuelOk ? 'Combustível ao vivo · Manutenção demo'
-              : 'Manutenção ao vivo · Combustível demo';
-    setStatus(fuelOk&&maintOk?'live':'demo', `${src} · ${now}`);
-    $('#dSrc').textContent=`Google Sheets · ${fuel.length} registros combustível · ${maint.length} eventos manutenção`;
+    setStatus('live',`Ao vivo · ${now}`);
+    $('#dSrc').textContent=`Google Sheets · ${fuel.length} reg. combustível · ${maint.length} eventos manutenção`;
   }
 
   initFilters(); rerender();
