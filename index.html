@@ -308,10 +308,14 @@ function animCount(el, target, currency=false) {
 // ── GOOGLE SHEETS via Apps Script (sem cache) ────────────
 async function fetchSheetFrom(sheetId, name) {
   const url = `${SCRIPT_URL}?id=${sheetId}&sheet=${encodeURIComponent(name)}&t=${Date.now()}`;
-  const res  = await fetch(url);
-  const data = await res.json();
-  if(!Array.isArray(data)) throw new Error(data?.error || 'bad response');
-  return data;
+  const res  = await fetch(url);               // lança só em erro de rede
+  const text = await res.text();
+  try {
+    const data = JSON.parse(text);
+    return Array.isArray(data) ? data : [];    // erro JSON do script → aba vazia
+  } catch(e) {
+    return [];                                 // resposta HTML/redirect → aba vazia
+  }
 }
 const fetchSheet = name => fetchSheetFrom(FUEL_SHEET_ID, name);
 
