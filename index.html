@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DashCOMB · COGERH · Gestão de Frota 2026</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+:root{
+  --bg-deep:#000d1a;--bg-dark:#001428;--bg-navy:#001f3f;
+  --blue-card:#002952;--blue-mid:#003d7a;--blue-btn:#0055a5;
+  --blue-light:#0070d0;--cyan:#00b4d8;--cyan-glow:#00d4ff;
+  --white:#fff;--w90:rgba(255,255,255,.9);--w70:rgba(255,255,255,.7);
+  --w50:rgba(255,255,255,.5);--w20:rgba(255,255,255,.2);--w08:rgba(255,255,255,.08);
+  --green:#00e096;--warn:#ffb830;--danger:#ff4d6d;
+  --card-bg:rgba(0,30,60,.78);--card-bd:rgba(0,180,216,.22);
+  --line:rgba(0,180,216,.13);
+  --r-lg:20px;--r-md:14px;--r-sm:10px;
+  --shadow:0 20px 60px rgba(0,0,0,.5);--glow:0 0 30px rgba(0,180,216,.28);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-deep);color:var(--white);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 80% 50% at 10% 0%,rgba(0,70,150,.35) 0%,transparent 60%),
+  radial-gradient(ellipse 60% 40% at 90% 100%,rgba(0,100,200,.22) 0%,transparent 60%),
+  linear-gradient(180deg,#000d1a 0%,#001428 60%,#000d1a 100%);z-index:-2}
+body::after{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,180,216,.04) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(0,180,216,.04) 1px,transparent 1px);
+  background-size:52px 52px;z-index:-1}
+.orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.11;z-index:-1;animation:floatOrb 22s ease-in-out infinite}
+.o1{width:600px;height:600px;background:#0055cc;top:-200px;left:-100px;animation-delay:0s}
+.o2{width:400px;height:400px;background:#00b4d8;bottom:-100px;right:-100px;animation-delay:-8s}
+.o3{width:300px;height:300px;background:#003faa;top:45%;left:48%;animation-delay:-15s}
+@keyframes floatOrb{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(28px,-28px) scale(1.05)}66%{transform:translate(-18px,18px) scale(.95)}}
+.wrap{max-width:1660px;margin:0 auto;padding:22px 26px}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;
+  background:rgba(0,22,50,.88);backdrop-filter:blur(22px);border:1px solid rgba(0,180,216,.28);
+  border-radius:24px;padding:18px 26px;margin-bottom:18px;
+  box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.07);position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--cyan),#0055cc,transparent)}
+.logo-area{display:flex;align-items:center;gap:14px}
+.logo-icon{width:50px;height:50px;background:linear-gradient(135deg,#003d7a,#0070d0);
+  border-radius:14px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 22px rgba(0,120,220,.55);flex-shrink:0}
+.logo-icon svg{width:26px;height:26px}
+.logo-text h1{font-size:20px;font-weight:900;letter-spacing:-.5px;
+  background:linear-gradient(135deg,#fff,#00d4ff 70%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-text p{font-size:10.5px;color:var(--w50);margin-top:3px;letter-spacing:.07em;text-transform:uppercase}
+.hbadges{display:flex;gap:8px;flex-wrap:wrap}
+.hbadge{padding:7px 13px;border-radius:999px;background:rgba(0,50,110,.6);border:1px solid var(--card-bd);
+  font-size:11.5px;color:var(--w70);white-space:nowrap}
+.hbadge b{color:var(--cyan-glow);font-weight:700}
+.status-pill{display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:999px;
+  font-size:11.5px;font-weight:600;cursor:pointer;transition:all .3s;user-select:none}
+.status-pill.live{background:rgba(0,224,150,.1);border:1px solid rgba(0,224,150,.3);color:var(--green)}
+.status-pill.demo{background:rgba(255,184,48,.1);border:1px solid rgba(255,184,48,.3);color:var(--warn)}
+.status-pill.loading{background:rgba(0,180,216,.1);border:1px solid rgba(0,180,216,.3);color:var(--cyan)}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot.live{background:var(--green);box-shadow:0 0 8px var(--green);animation:pdot 2s infinite}
+.dot.demo{background:var(--warn)}
+.dot.loading{background:var(--cyan);animation:pdot 1s infinite}
+@keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+
+/* TOOLBAR */
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.tabs{display:flex;gap:5px;background:rgba(0,18,42,.85);border:1px solid var(--line);border-radius:var(--r-md);padding:5px}
+.tab{padding:10px 20px;border-radius:10px;border:none;cursor:pointer;font-size:12.5px;font-weight:700;
+  color:var(--w50);background:transparent;transition:all .3s;letter-spacing:.02em;white-space:nowrap}
+.tab:hover{color:var(--w70)}
+.tab.active.fuel{background:linear-gradient(135deg,rgba(0,100,200,.42),rgba(0,180,216,.28));color:var(--cyan-glow);
+  box-shadow:0 0 18px rgba(0,180,216,.2),inset 0 1px 0 rgba(255,255,255,.1);border:1px solid rgba(0,180,216,.32)}
+.tab.active.maint{background:linear-gradient(135deg,rgba(0,150,80,.3),rgba(0,224,150,.2));color:var(--green);
+  box-shadow:0 0 18px rgba(0,224,150,.15),inset 0 1px 0 rgba(255,255,255,.1);border:1px solid rgba(0,224,150,.28)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+select,input[type=text]{background:rgba(0,22,52,.85);color:var(--white);border:1px solid var(--card-bd);
+  border-radius:var(--r-sm);padding:9px 13px;font-size:12.5px;min-width:165px;
+  outline:none;transition:border-color .3s,box-shadow .3s;backdrop-filter:blur(10px)}
+select:focus,input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,180,216,.14)}
+select option{background:#001428}
+.rbtn{display:flex;align-items:center;gap:7px;padding:9px 16px;border-radius:var(--r-sm);
+  background:rgba(0,50,105,.6);border:1px solid var(--card-bd);color:var(--w70);
+  font-size:12px;font-weight:600;cursor:pointer;transition:all .3s}
+.rbtn:hover{background:rgba(0,75,155,.7);color:var(--cyan);border-color:var(--cyan)}
+.rbtn svg{width:14px;height:14px;transition:transform .5s}
+.rbtn.spin svg{animation:spin360 .9s linear infinite}
+@keyframes spin360{to{transform:rotate(360deg)}}
+
+/* SECTIONS */
+.section{display:none;animation:fadeUp .38s ease}
+.section.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* GRIDS */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:15px}
+.g2{display:grid;grid-template-columns:1.35fr .65fr;gap:15px;margin-bottom:15px}
+.g2r{display:grid;grid-template-columns:.65fr 1.35fr;gap:15px;margin-bottom:15px}
+
+/* CARD */
+.card{background:var(--card-bg);border:1px solid var(--card-bd);border-radius:var(--r-lg);
+  padding:20px 22px;backdrop-filter:blur(22px);box-shadow:var(--shadow);
+  position:relative;overflow:hidden;transition:transform .3s,box-shadow .3s}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow),var(--glow)}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,180,216,.45),transparent)}
+.card h3{font-size:11px;font-weight:700;color:var(--w50);margin-bottom:15px;
+  letter-spacing:.1em;text-transform:uppercase}
+
+/* KPI */
+.kpi-icon{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center}
+.kpi-icon svg{width:20px;height:20px}
+.kpi-label{font-size:10.5px;font-weight:600;color:var(--w50);letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px}
+.kpi-val{font-size:28px;font-weight:900;line-height:1;letter-spacing:-1px}
+.kpi-val.cyan{background:linear-gradient(135deg,#fff,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.kpi-val.green{background:linear-gradient(135deg,#fff,#00e096);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.kpi-val.warn{background:linear-gradient(135deg,#fff,#ffb830);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.kpi-sub{font-size:11px;color:var(--w50);margin-top:7px}
+.kpi-card::after{content:'';position:absolute;bottom:-22px;right:-22px;width:110px;height:110px;
+  border-radius:50%;background:radial-gradient(circle,rgba(0,180,216,.1),transparent 70%)}
+
+/* BARS */
+.chart{display:flex;align-items:flex-end;gap:5px;height:195px;padding:0 2px}
+.bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
+.bval{font-size:8.5px;color:var(--w50);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.bar{width:100%;border-radius:5px 5px 2px 2px;min-height:4px;position:relative;overflow:hidden;
+  transform-origin:bottom;animation:growUp .75s cubic-bezier(.34,1.56,.64,1) both}
+.bar::after{content:'';position:absolute;top:0;left:0;right:0;height:38%;background:rgba(255,255,255,.14);border-radius:inherit}
+.bar.fb{background:linear-gradient(180deg,#00d4ff,#0070d0);box-shadow:0 0 14px rgba(0,180,216,.38)}
+.bar.mb{background:linear-gradient(180deg,#00e096,#00a06a);box-shadow:0 0 14px rgba(0,224,150,.28)}
+.blbl{font-size:9.5px;color:var(--w50);text-align:center}
+@keyframes growUp{from{transform:scaleY(0);opacity:0}to{transform:scaleY(1);opacity:1}}
+
+/* ITEMS */
+.stack{display:flex;flex-direction:column;gap:7px;max-height:320px;overflow-y:auto}
+.stack::-webkit-scrollbar{width:4px}
+.stack::-webkit-scrollbar-thumb{background:rgba(0,180,216,.25);border-radius:2px}
+.item{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:9px 11px;background:rgba(0,38,76,.42);border-radius:var(--r-sm);
+  border:1px solid var(--line);transition:all .2s}
+.item:hover{background:rgba(0,58,118,.5);border-color:var(--card-bd)}
+.item-lbl{font-size:12px;color:var(--w70);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;flex-shrink:0}
+.tag.c{background:rgba(0,180,216,.14);border:1px solid rgba(0,180,216,.28);color:var(--cyan-glow)}
+.tag.g{background:rgba(0,224,150,.1);border:1px solid rgba(0,224,150,.22);color:var(--green)}
+.tag.w{background:rgba(255,184,48,.1);border:1px solid rgba(255,184,48,.22);color:var(--warn)}
+.tag.d{background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.22);color:var(--danger)}
+
+/* TABLE */
+.tw{overflow:auto;border-radius:var(--r-md);border:1px solid var(--line);margin-top:10px;max-height:460px}
+.tw::-webkit-scrollbar{width:5px;height:5px}
+.tw::-webkit-scrollbar-track{background:rgba(0,18,42,.5)}
+.tw::-webkit-scrollbar-thumb{background:rgba(0,180,216,.28);border-radius:3px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:10px 12px;text-align:left;vertical-align:middle;border-bottom:1px solid rgba(255,255,255,.05)}
+th{background:rgba(0,22,50,.96);color:var(--w50);font-size:10px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;position:sticky;top:0;z-index:1;white-space:nowrap}
+tr:hover td{background:rgba(0,55,115,.22)}
+td{color:var(--w70)}
+td b{color:var(--white)}
+.mu{color:var(--w50)}
+
+/* SETUP GUIDE */
+.guide{background:rgba(0,28,60,.82);border:1px solid rgba(255,184,48,.3);
+  border-radius:var(--r-lg);padding:22px 24px;margin-top:16px;backdrop-filter:blur(18px)}
+.guide-head{color:var(--warn);font-size:13px;font-weight:700;margin-bottom:10px}
+.guide-sub{font-size:11.5px;color:var(--w50);margin-bottom:14px;line-height:1.55}
+.guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:13px}
+.guide-step{background:rgba(0,38,76,.5);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 16px}
+.guide-step h4{font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:9px}
+.guide-step p,.guide-step li{font-size:11px;color:var(--w50);line-height:1.65}
+.guide-step ul{padding-left:15px}
+code{background:rgba(0,180,216,.14);padding:1px 5px;border-radius:4px;font-size:10px;color:var(--cyan)}
+
+/* FOOTER */
+.footer{display:flex;justify-content:space-between;align-items:center;padding:13px 18px;
+  margin-top:18px;background:rgba(0,18,42,.65);border:1px solid var(--line);
+  border-radius:var(--r-md);font-size:11.5px;color:var(--w50);backdrop-filter:blur(10px)}
+.footer .cd{color:var(--cyan);font-weight:700}
+
+.note{font-size:11px;color:var(--w50);margin-top:9px;line-height:1.55}
+.empty{text-align:center;padding:28px;color:var(--w50);font-size:12px}
+
+/* RESPONSIVE */
+@media(max-width:1200px){.g4{grid-template-columns:1fr 1fr}.g2,.g2r{grid-template-columns:1fr}}
+@media(max-width:768px){.wrap{padding:14px}.g4{grid-template-columns:1fr}.header{flex-direction:column}.kpi-val{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+<div class="wrap">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo-area">
+    <div class="logo-icon">
+      <svg viewBox="0 0 32 32" fill="white" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 2C16 2 5 13 5 20a11 11 0 0022 0C27 13 16 2 16 2z"/>
+        <path d="M11 23c1.5 2.5 3.5 4 5 4" stroke="rgba(0,212,255,0.7)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <h1>COGERH · DashCOMB</h1>
+      <p>Central Integrada de Combustível e Manutenção Veicular · 2026</p>
+    </div>
+  </div>
+  <div class="hbadges">
+    <div class="hbadge">Combustível: <b id="bFuel">—</b></div>
+    <div class="hbadge">Manutenção: <b id="bMaint">—</b></div>
+    <div class="hbadge">Atualizado: <b id="bTime">—</b></div>
+  </div>
+  <div id="sPill" class="status-pill loading" title="Clique para atualizar" onclick="loadData()">
+    <div class="dot loading" id="sDot"></div>
+    <span id="sTxt">Carregando...</span>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="tabs">
+    <button class="tab fuel active" data-tab="fuel">⛽ &nbsp;Controle de Combustível</button>
+    <button class="tab maint" data-tab="maint">🔧 &nbsp;Controle de Manutenção</button>
+  </div>
+  <div class="filters">
+    <select id="fMonth"><option value="all">Período: Todos</option></select>
+    <select id="fPlate"><option value="all">Veículo: Todos</option></select>
+    <input type="text" id="fDef" placeholder="🔍 Defeito / motivo...">
+    <button class="rbtn" id="rBtn" onclick="loadData()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15"/>
+      </svg>
+      <span id="rLbl">Atualizar</span>
+    </button>
+  </div>
+</div>
+
+<section id="sec-fuel" class="section active"></section>
+<section id="sec-maint" class="section"></section>
+
+<div class="footer">
+  <span>📊 DashCOMB · COGERH · Gestão de Frota 2026</span>
+  <span>Próxima atualização em <span class="cd" id="cdT">60s</span> &nbsp;·&nbsp; <span id="dSrc">—</span></span>
+</div>
+</div><!-- wrap -->
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────
+const SHEET_ID       = '1wwSfGPBj4ygdMnZqrR_pr7-dLj5fO7SoeYT0xdDF7Lw';
+const SHEET_FUEL     = 'Combustivel';
+const MAINT_SHEET_ID = '1jPNFburs7qeOcCHwELg5tC6nROVUjEpc0SDz3BEUzY4';
+const MAINT_TABS     = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO',
+                        'JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+const REFRESH_S      = 60;
+
+// ── DEMO FALLBACK DATA ───────────────────────────────────
+const DEMO_FUEL = [
+  {month:1,monthLabel:'Jan',placa:'SAO0F56',modelo:'11180',familia:'CAMINHAO',tipoFrota:'LOCADA',tipoCombustivel:'DIESEL S-10',litros:349.83,kmRodados:2322,kmPorLitro:6.64,total:2115.17},
+  {month:1,monthLabel:'Jan',placa:'SAZ4F76',modelo:'11180',familia:'CAMINHAO',tipoFrota:'LOCADA',tipoCombustivel:'DIESEL S-10',litros:307.01,kmRodados:1699,kmPorLitro:5.53,total:1876.71},
+  {month:1,monthLabel:'Jan',placa:'SBB1I82',modelo:'STRADA',familia:'PICKUP LEVE',tipoFrota:'LOCADA',tipoCombustivel:'GASOLINA',litros:340.8,kmRodados:4079,kmPorLitro:11.97,total:2230.8},
+  {month:1,monthLabel:'Jan',placa:'HYQ7647',modelo:'HILUX',familia:'PICKUP MEDIA',tipoFrota:'PROPRIA',tipoCombustivel:'DIESEL S-10',litros:117.82,kmRodados:1406,kmPorLitro:11.93,total:693.96},
+  {month:1,monthLabel:'Jan',placa:'SAN2D86',modelo:'NXR 160',familia:'MOTO',tipoFrota:'LOCADA',tipoCombustivel:'GASOLINA',litros:82.81,kmRodados:3120,kmPorLitro:37.68,total:576.24},
+  {month:1,monthLabel:'Jan',placa:'NVC1680',modelo:'NXR150',familia:'MOTO',tipoFrota:'PROPRIA',tipoCombustivel:'GASOLINA',litros:7.83,kmRodados:884,kmPorLitro:112.9,total:50},
+  {month:1,monthLabel:'Jan',placa:'SBT8F55',modelo:'S10',familia:'PICKUP LEVE',tipoFrota:'LOCADA',tipoCombustivel:'DIESEL S-10',litros:329.3,kmRodados:2708,kmPorLitro:8.22,total:1943.4},
+  {month:2,monthLabel:'Fev',placa:'SAO0F56',modelo:'11180',familia:'CAMINHAO',tipoFrota:'LOCADA',tipoCombustivel:'DIESEL S-10',litros:453.57,kmRodados:2412,kmPorLitro:5.32,total:2890.9},
+  {month:2,monthLabel:'Fev',placa:'SAZ4F76',modelo:'11180',familia:'CAMINHAO',tipoFrota:'LOCADA',tipoCombustivel:'DIESEL S-10',litros:343.73,kmRodados:2045,kmPorLitro:5.95,total:2167.59},
+  {month:2,monthLabel:'Fev',placa:'SBB1I82',modelo:'STRADA',familia:'PICKUP LEVE',tipoFrota:'LOCADA',tipoCombustivel:'GASOLINA',litros:308.76,kmRodados:3554,kmPorLitro:11.51,total:2048.47},
+  {month:2,monthLabel:'Fev',placa:'HYQ7647',modelo:'HILUX',familia:'PICKUP MEDIA',tipoFrota:'PROPRIA',tipoCombustivel:'DIESEL S-10',litros:169.77,kmRodados:2193,kmPorLitro:12.92,total:1049.82},
+  {month:2,monthLabel:'Fev',placa:'SAN2D86',modelo:'NXR 160',familia:'MOTO',tipoFrota:'LOCADA',tipoCombustivel:'GASOLINA',litros:56.53,kmRodados:2231,kmPorLitro:39.47,total:393.36},
+  {month:2,monthLabel:'Fev',placa:'NVC1680',modelo:'NXR150',familia:'MOTO',tipoFrota:'PROPRIA',tipoCombustivel:'GASOLINA',litros:7.47,kmRodados:1768,kmPorLitro:236.68,total:49.97},
+  {month:2,monthLabel:'Fev',placa:'SBT8F55',modelo:'S10',familia:'PICKUP LEVE',tipoFrota:'LOCADA',tipoCombustivel:'DIESEL S-10',litros:389.32,kmRodados:3455,kmPorLitro:8.87,total:2349.42},
+];
+const DEMO_MAINT = [
+  {placa:'SAU2A37',modelo:'11.180 DRC',lotacao:'TRECHO I',veiculo:'CAMINHAO',tipoFrota:'LOCADA',entrada:'2025-01-23',saida:'2025-02-12',motivo:'REVISÃO DE 40.000 KM',month:1,monthLabel:'Jan',eventMonth:1,eventMonthLabel:'Jan',daysInShop:20,status:'Liberado',active:false},
+  {placa:'SAY8B06',modelo:'11180',lotacao:'CANAL TRAB.',veiculo:'CAMINHAO',tipoFrota:'LOCADA',entrada:'2024-12-05',saida:'2025-04-24',motivo:'ELÉTRICA, CAIXA DE DIREÇÃO, PNEUS',month:1,monthLabel:'Jan',eventMonth:1,eventMonthLabel:'Jan',daysInShop:140,status:'Liberado',active:false},
+  {placa:'SBN4D37',modelo:'11.180 DRC',lotacao:'TRECHO III',veiculo:'CAMINHAO',tipoFrota:'LOCADA',entrada:'2025-01-20',saida:'2025-01-29',motivo:'VAZAMENTO CAIXA DE DIREÇÃO E CILINDRO',month:1,monthLabel:'Jan',eventMonth:1,eventMonthLabel:'Jan',daysInShop:9,status:'Liberado',active:false},
+  {placa:'SAN2D86',modelo:'NXR 160',lotacao:'TRECHO I',veiculo:'MOTO',tipoFrota:'LOCADA',entrada:'2025-02-07',saida:'2025-04-25',motivo:'MOTO ROUBADA',month:2,monthLabel:'Fev',eventMonth:2,eventMonthLabel:'Fev',daysInShop:77,status:'Liberado',active:false},
+  {placa:'SBN4D37',modelo:'11.180 DRC',lotacao:'TRECHO III',veiculo:'CAMINHAO',tipoFrota:'LOCADA',entrada:'2025-03-26',saida:'2025-05-28',motivo:'RETENTOR DO DIFERENCIAL VAZANDO',month:3,monthLabel:'Mar',eventMonth:3,eventMonthLabel:'Mar',daysInShop:63,status:'Liberado',active:false},
+  {placa:'OHZ9351',modelo:'RANGER',lotacao:'CATUANA',veiculo:'PICKUP MEDIA',tipoFrota:'CEDIDA',entrada:'2025-08-08',saida:null,motivo:'PROBLEMA NO MOTOR',month:8,monthLabel:'Ago',eventMonth:8,eventMonthLabel:'Ago',daysInShop:145,status:'Em oficina',active:true},
+  {placa:'NVE7890',modelo:'NXR150',lotacao:'CATU',veiculo:'MOTO',tipoFrota:'PROPRIA',entrada:'2025-11-13',saida:null,motivo:'NÃO FUNCIONA',month:11,monthLabel:'Nov',eventMonth:11,eventMonthLabel:'Nov',daysInShop:48,status:'Em oficina',active:true},
+  {placa:'SAY8B06',modelo:'11180',lotacao:'CANAL TRAB.',veiculo:'CAMINHAO',tipoFrota:'LOCADA',entrada:'2025-11-11',saida:'2025-12-04',motivo:'PERDEU FORÇA',month:11,monthLabel:'Nov',eventMonth:11,eventMonthLabel:'Nov',daysInShop:23,status:'Liberado',active:false},
+];
+
+// ── STATE ────────────────────────────────────────────────
+const MOS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+let DATA = null, fromSheets = false, cdVal = REFRESH_S, cdTimer = null;
+
+// ── UTILS ────────────────────────────────────────────────
+const $  = s => document.querySelector(s);
+const fmt  = n => (n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const inti = n => Math.round(n||0).toLocaleString('pt-BR');
+const dateBR = s => { if(!s) return '—'; const d=new Date(s+'T00:00:00'); return isNaN(d)?s:d.toLocaleDateString('pt-BR'); };
+const vLabel = p => { const m=DATA?.vehicleMeta?.[p]||{}; return m.modelo?`${p} · ${m.modelo}`:p; };
+
+function animCount(el, target, currency=false) {
+  if(!el) return;
+  const dur=900, t0=performance.now();
+  const step = now => {
+    const p = Math.min((now-t0)/dur,1), e=1-Math.pow(1-p,3), v=target*e;
+    el.textContent = currency ? 'R$ '+fmt(v) : inti(v);
+    if(p<1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+// ── GOOGLE SHEETS ────────────────────────────────────────
+async function fetchSheetFrom(sheetId, name) {
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(name)}&t=${Date.now()}`;
+  const res  = await fetch(url);
+  const text = await res.text();
+  const m    = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+  if(!m) throw new Error('bad response');
+  const j = JSON.parse(m[1]);
+  if(j.status==='error'||!j.table?.rows?.length) return [];
+  const {cols,rows} = j.table;
+  return rows.map(row => {
+    const o={};
+    cols.forEach((c,i)=>{ o[c.label||c.id] = row.c?.[i]?.v??null; });
+    return o;
+  });
+}
+const fetchSheet = name => fetchSheetFrom(SHEET_ID, name);
+
+// ── DATE PARSER ──────────────────────────────────────────
+function parseDate(v) {
+  if(v===null||v===undefined||v==='') return null;
+  const s = String(v);
+  // gviz: Date(2025,10,13) — month is 0-indexed
+  const gm = s.match(/^Date\((\d+),(\d+),(\d+)\)$/);
+  if(gm) {
+    const d = new Date(+gm[1], +gm[2], +gm[3]);
+    return isNaN(d)?null:d.toISOString().slice(0,10);
+  }
+  // M/D/YY or M/D/YYYY
+  const pm = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(pm) {
+    let yr = +pm[3];
+    if(yr < 100) yr += (yr < 50 ? 2000 : 1900);
+    const d = new Date(yr, +pm[1]-1, +pm[2]);
+    return isNaN(d)?null:d.toISOString().slice(0,10);
+  }
+  // ISO or other parseable string
+  const d = new Date(s);
+  return isNaN(d)?null:d.toISOString().slice(0,10);
+}
+
+function txFuel(rows) {
+  return rows.filter(r=>r['Placa']||r['placa']).map(r=>({
+    month:           +( r['Mês']||r['Mes']||r['month']||0),
+    monthLabel:      r['Label']||r['monthLabel']||MOS[(+(r['Mês']||r['Mes']||1))-1]||'',
+    placa:           r['Placa']||r['placa']||'',
+    modelo:          r['Modelo']||r['modelo']||'',
+    familia:         r['Família']||r['Familia']||r['familia']||'',
+    tipoFrota:       r['Tipo Frota']||r['tipoFrota']||'',
+    tipoCombustivel: r['Tipo Combustível']||r['Combustivel']||r['tipoCombustivel']||'',
+    litros:          +(r['Litros']||r['litros']||0)||null,
+    kmRodados:       +(r['Km Rodados']||r['kmRodados']||0)||null,
+    kmPorLitro:      +(r['Km/L']||r['kmPorLitro']||0)||null,
+    total:           +(r['Total (R$)']||r['Total']||r['total']||0)||0,
+  }));
+}
+
+function txMaintRow(r, month) {
+  const placa = (r['PLACA']||r['Placa']||r['placa']||'').trim();
+  if(!placa) return null;
+  const entRaw = r['ENTRADA OFICINA']||r['Entrada']||r['entrada']||null;
+  const saiRaw = r['SAÍDA OFICINA']||r['SAIDA OFICINA']||r['Saída']||r['saida']||null;
+  const ent = parseDate(entRaw);
+  const sai = parseDate(saiRaw);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const days = ent&&sai
+    ? Math.round((new Date(sai+'T00:00:00')-new Date(ent+'T00:00:00'))/864e5)
+    : ent ? Math.round((today-new Date(ent+'T00:00:00'))/864e5) : null;
+  return {
+    month, monthLabel: MOS[month-1]||'',
+    placa,
+    modelo:    (r['MODELO']  ||r['Modelo']  ||'').trim(),
+    lotacao:   (r['LOTAÇÃO'] ||r['LOTACAO'] ||r['Lotação']||'').trim(),
+    veiculo:   (r['VEICULO'] ||r['VEÍCULO'] ||r['Veiculo']||'').trim(),
+    tipoFrota: (r['TIPO FROTA']||r['Tipo Frota']||'').trim(),
+    entrada: ent, saida: sai,
+    motivo:    (r['MOTIVO']  ||r['Motivo']  ||'').trim(),
+    eventMonth: month, eventMonthLabel: MOS[month-1]||'',
+    daysInShop: days,
+    status: sai?'Liberado':'Em oficina',
+    active: !sai && !!ent,
+  };
+}
+
+function buildAgg(fuel, maint) {
+  const fuelMonthly = MOS.map((l,i)=>{
+    const m=i+1, r=fuel.filter(x=>x.month===m);
+    return {month:m,label:l,total:r.reduce((a,b)=>a+(b.total||0),0),litros:r.reduce((a,b)=>a+(b.litros||0),0)};
+  });
+  const maintMonthly = MOS.map((l,i)=>{
+    const m=i+1; return {month:m,label:l,ativos:maint.filter(x=>x.month===m&&x.active).length};
+  });
+  const vehicleMeta={};
+  [...fuel,...maint].forEach(r=>{
+    if(r.placa&&!vehicleMeta[r.placa]) vehicleMeta[r.placa]={familia:r.familia,tipoFrota:r.tipoFrota,modelo:r.modelo};
+  });
+  const allPlates=[...new Set([...fuel.map(r=>r.placa),...maint.map(r=>r.placa)])].filter(Boolean).sort();
+  return {fuelMonthly,maintMonthly,vehicleMeta,allPlates};
+}
+
+// ── LOAD DATA ────────────────────────────────────────────
+async function loadData() {
+  setStatus('loading','Buscando dados...');
+  const btn=$('#rBtn'); btn.classList.add('spin'); $('#rLbl').textContent='Buscando...';
+
+  // Fuel: single tab from first spreadsheet
+  let fuel = [];
+  try {
+    const fRows = await fetchSheet(SHEET_FUEL);
+    fuel = txFuel(fRows);
+  } catch(e) { /* fuel sheet not ready — will use demo if maint also fails */ }
+
+  // Maintenance: all 12 monthly tabs from second spreadsheet, deduplicated
+  let maint = [];
+  let maintOk = false;
+  try {
+    const results = await Promise.allSettled(
+      MAINT_TABS.map((tab, i) =>
+        fetchSheetFrom(MAINT_SHEET_ID, tab).then(rows => ({ rows, month: i+1 }))
+      )
+    );
+    const seen = new Map();
+    results.forEach(r => {
+      if(r.status !== 'fulfilled') return;
+      const {rows, month} = r.value;
+      rows.forEach(row => {
+        const ev = txMaintRow(row, month);
+        if(!ev) return;
+        const key = `${ev.placa}|${ev.entrada||''}`;
+        if(!seen.has(key)) { seen.set(key, true); maint.push(ev); }
+      });
+    });
+    if(maint.length) maintOk = true;
+  } catch(e) { /* fallback below */ }
+
+  if(!fuel.length && !maint.length) {
+    // Full demo mode
+    DATA={fuelRecords:DEMO_FUEL,maintenanceEvents:DEMO_MAINT,...buildAgg(DEMO_FUEL,DEMO_MAINT)};
+    fromSheets=false;
+    setStatus('demo','Dados demo · configure a aba Combustivel na planilha');
+    $('#dSrc').textContent='Demonstração — configure a aba "Combustivel" na planilha de combustíveis';
+  } else {
+    if(!fuel.length)  fuel  = DEMO_FUEL;
+    if(!maint.length) maint = DEMO_MAINT;
+    DATA={fuelRecords:fuel,maintenanceEvents:maint,...buildAgg(fuel,maint)};
+    fromSheets = maintOk;
+    const now=new Date().toLocaleString('pt-BR');
+    setStatus(maintOk?'live':'demo', maintOk?`Ao vivo · ${now}`:'Parcial — manutenção ao vivo, combustível em demo');
+    $('#dSrc').textContent = maintOk
+      ? `Google Sheets (tempo real) · ${maint.length} eventos de manutenção`
+      : 'Manutenção: Google Sheets · Combustível: configure aba "Combustivel"';
+  }
+
+  initFilters(); rerender();
+  btn.classList.remove('spin'); $('#rLbl').textContent='Atualizar';
+  resetCD();
+}
+
+function setStatus(type,txt){
+  const p=$('#sPill'),d=$('#sDot'),t=$('#sTxt');
+  p.className=`status-pill ${type}`; d.className=`dot ${type}`; t.textContent=txt;
+}
+
+// ── FILTERS ──────────────────────────────────────────────
+function initFilters(){
+  const fm=$('#fMonth'),fp=$('#fPlate');
+  const sm=fm.value,sp=fp.value;
+  fm.innerHTML='<option value="all">Período: Todos</option>';
+  fp.innerHTML='<option value="all">Veículo: Todos</option>';
+  MOS.forEach((m,i)=>fm.insertAdjacentHTML('beforeend',`<option value="${i+1}">${m}</option>`));
+  DATA.allPlates.forEach(p=>fp.insertAdjacentHTML('beforeend',`<option value="${p}">${vLabel(p)}</option>`));
+  if(sm&&sm!='all') fm.value=sm;
+  if(sp&&sp!='all') fp.value=sp;
+  $('#bFuel').textContent=DATA.fuelRecords.length+' reg.';
+  $('#bMaint').textContent=DATA.maintenanceEvents.length+' eventos';
+  $('#bTime').textContent=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+
+const getF = ()=>({month:$('#fMonth').value,plate:$('#fPlate').value,def:($('#fDef').value||'').trim().toLowerCase()});
+const fuelF = ()=>{ const f=getF(); return DATA.fuelRecords.filter(r=>(f.month==='all'||r.month===+f.month)&&(f.plate==='all'||r.placa===f.plate)); };
+const maintF= ()=>{ const f=getF(); return DATA.maintenanceEvents.filter(r=>(f.month==='all'||r.eventMonth===+f.month)&&(f.plate==='all'||r.placa===f.plate)&&(!f.def||((r.motivo||'').toLowerCase().includes(f.def)))); };
+
+// ── CHART ────────────────────────────────────────────────
+function mkBars(items, cls) {
+  if(!items.length) return '<div class="empty">Sem dados no recorte atual.</div>';
+  const mx=Math.max(...items.map(x=>x.v),1);
+  return `<div class="chart">${items.map((x,i)=>`
+    <div class="bcol" style="animation-delay:${i*40}ms">
+      <div class="bval">${x.f||inti(x.v)}</div>
+      <div class="bar ${cls}" style="height:${Math.max(4,182*x.v/mx)}px;animation-delay:${i*55}ms"></div>
+      <div class="blbl">${x.l}</div>
+    </div>`).join('')}</div>`;
+}
+
+function topN(arr,key,val,n=10){
+  const o={};
+  arr.forEach(r=>{const k=r[key]||'N/I';o[k]=(o[k]||0)+(+r[val]||0);});
+  return Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,n);
+}
+
+// ── RENDER FUEL ──────────────────────────────────────────
+function renderFuel(){
+  const fuel=fuelF().sort((a,b)=>a.month-b.month||(b.total||0)-(a.total||0));
+  const totR=fuel.reduce((a,b)=>a+(b.total||0),0);
+  const totL=fuel.reduce((a,b)=>a+(b.litros||0),0);
+  const plates=new Set(fuel.map(r=>r.placa)).size;
+  const kml=fuel.filter(r=>r.kmPorLitro>0&&r.kmPorLitro<500);
+  const avgKML=kml.length?kml.reduce((a,b)=>a+b.kmPorLitro,0)/kml.length:0;
+  const byMo=DATA.fuelMonthly.map(m=>({l:m.label,v:m.total,f:'R$'+fmt(m.total)}));
+  const topV=topN(fuel,'placa','total',8);
+  const byFam=topN(fuel,'familia','total',6);
+
+  $('#sec-fuel').innerHTML=`
+  <div class="g4">
+    <div class="card kpi-card">
+      <div class="kpi-icon" style="background:linear-gradient(135deg,#003d7a,#0070d0)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5"/><circle cx="9" cy="19" r="2"/><circle cx="20" cy="19" r="2"/></svg>
+      </div>
+      <div class="kpi-label">Custo Total</div>
+      <div class="kpi-val cyan" id="kfR">R$ 0,00</div>
+      <div class="kpi-sub">combustível no período</div>
+    </div>
+    <div class="card kpi-card">
+      <div class="kpi-icon" style="background:linear-gradient(135deg,#00396e,#00aaff)">
+        <svg viewBox="0 0 24 24" fill="white"><path d="M19 7c0-1.1-.9-2-2-2h-2V3H9v2H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7zm-5 8h-4v-2h4v2zm0-4h-4V9h4v2z"/></svg>
+      </div>
+      <div class="kpi-label">Litros Consumidos</div>
+      <div class="kpi-val cyan" id="kfL">0</div>
+      <div class="kpi-sub">volume total no período</div>
+    </div>
+    <div class="card kpi-card">
+      <div class="kpi-icon" style="background:linear-gradient(135deg,#004b8d,#00b4d8)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      </div>
+      <div class="kpi-label">Placas Ativas</div>
+      <div class="kpi-val cyan" id="kfP">0</div>
+      <div class="kpi-sub">veículos com abastecimento</div>
+    </div>
+    <div class="card kpi-card">
+      <div class="kpi-icon" style="background:linear-gradient(135deg,#003d7a,#00d4ff)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <div class="kpi-label">Km/L Médio</div>
+      <div class="kpi-val cyan" id="kfK">${fmt(avgKML)}</div>
+      <div class="kpi-sub">eficiência média da frota</div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <h3>Gasto Mensal de Combustível</h3>
+      ${mkBars(byMo,'fb')}
+      <div class="note">Evolução do custo mensal de combustível. Dados sincronizados com a planilha.</div>
+    </div>
+    <div class="card">
+      <h3>Custo por Tipo de Veículo</h3>
+      <div class="stack">
+        ${byFam.map(([k,v])=>`<div class="item"><div class="item-lbl">${k}</div><div class="tag c">R$ ${fmt(v)}</div></div>`).join('')||'<div class="empty">Sem dados.</div>'}
+      </div>
+    </div>
+  </div>
+  <div class="g2r">
+    <div class="card">
+      <h3>Top Veículos por Custo</h3>
+      <div class="stack">
+        ${topV.map(([k,v],i)=>`<div class="item">
+          <div class="item-lbl"><span style="color:var(--w50);margin-right:8px;font-size:10px">#${i+1}</span>${vLabel(k)}</div>
+          <div class="tag c">R$ ${fmt(v)}</div>
+        </div>`).join('')||'<div class="empty">Sem dados.</div>'}
+      </div>
+    </div>
+    <div class="card">
+      <h3>Registros Detalhados</h3>
+      <div class="tw"><table>
+        <thead><tr><th>Mês</th><th>Placa</th><th>Modelo</th><th>Família</th><th>Combustível</th><th>Km Rod.</th><th>Litros</th><th>Km/L</th><th>Total R$</th></tr></thead>
+        <tbody>${fuel.map(r=>`<tr>
+          <td>${r.monthLabel}</td><td><b>${r.placa}</b></td><td>${r.modelo||'—'}</td>
+          <td>${r.familia||'—'}</td>
+          <td><span class="tag c" style="font-size:9.5px">${r.tipoCombustivel||'—'}</span></td>
+          <td class="mu">${r.kmRodados!=null?inti(r.kmRodados):'—'}</td>
+          <td>${r.litros!=null?fmt(r.litros):'—'}</td>
+          <td class="mu">${r.kmPorLitro&&r.kmPorLitro<500?fmt(r.kmPorLitro):'—'}</td>
+          <td><b>R$ ${fmt(r.total)}</b></td>
+        </tr>`).join('')||'<tr><td colspan="9" class="empty">Sem registros.</td></tr>'}
+        </tbody>
+      </table></div>
+    </div>
+  </div>`;
+
+  setTimeout(()=>{
+    animCount($('#kfR'),totR,true);
+    animCount($('#kfL'),totL);
+    animCount($('#kfP'),plates);
+  },80);
+}
+
+// ── RENDER MAINT ─────────────────────────────────────────
+function renderMaint(){
+  const ev=maintF().sort((a,b)=>a.eventMonth-b.eventMonth||(b.daysInShop||0)-(a.daysInShop||0));
+  const open=ev.filter(x=>!x.saida).length;
+  const avg=ev.length?ev.reduce((a,b)=>a+(b.daysInShop||0),0)/ev.length:0;
+  const mx=ev.length?Math.max(...ev.map(e=>e.daysInShop||0)):0;
+  const byMo=DATA.maintMonthly.map(m=>({l:m.label,v:m.ativos,f:inti(m.ativos)}));
+  const topDef=topN(ev,'motivo','daysInShop',10);
+
+  $('#sec-maint').innerHTML=`
+  <div class="g4">
+    <div class="card kpi-card">
+      <div class="kpi-icon" style="background:linear-gradient(135deg,#004d2e,#00c97a)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+      </div>
+      <div class="kpi-label">Total de Eventos</div>
+      <div class="kpi-val green" id="kmT">0</div>
+      <div class="kpi-sub">ocorrências em oficina</div>
+    </div>
+    <div class="card kpi-card">
+      <div class="kpi-icon" style="background:linear-gradient(135deg,#6b0000,#ff4d6d)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      </div>
+      <div class="kpi-label">Em Oficina</div>
+      <div class="kpi-val warn" id="kmO">0</div>
+      <div class="kpi-sub">sem saída registrada</div>
+    </div>
+    <div class="card kpi-card">
+      <div class="kpi-icon" style="background:linear-gradient(135deg,#005299,#00b4d8)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      </div>
+      <div class="kpi-label">Permanência Média</div>
+      <div class="kpi-val green" id="kmA">${inti(avg)} dias</div>
+      <div class="kpi-sub">tempo médio em oficina</div>
+    </div>
+    <div class="card kpi-card">
+      <div class="kpi-icon" style="background:linear-gradient(135deg,#4d2600,#ff8c00)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      </div>
+      <div class="kpi-label">Maior Imobilização</div>
+      <div class="kpi-val warn">${inti(mx)} dias</div>
+      <div class="kpi-sub">evento mais longo registrado</div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <h3>Veículos em Oficina por Mês</h3>
+      ${mkBars(byMo,'mb')}
+      <div class="note">Quantidade de veículos com ocorrência ativa em cada mês.</div>
+    </div>
+    <div class="card">
+      <h3>Defeitos com Maior Impacto</h3>
+      <div class="stack">
+        ${topDef.map(([k,v])=>`<div class="item">
+          <div class="item-lbl" style="font-size:11px">${k||'Não informado'}</div>
+          <div class="tag ${v>30?'d':'g'}">${inti(v)} dias</div>
+        </div>`).join('')||'<div class="empty">Sem dados.</div>'}
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Histórico Detalhado de Manutenção</h3>
+    <div class="tw"><table>
+      <thead><tr><th>Mês</th><th>Placa</th><th>Modelo</th><th>Lotação</th><th>Motivo / Defeito</th><th>Entrada</th><th>Saída</th><th>Dias</th><th>Status</th></tr></thead>
+      <tbody>${ev.map(r=>`<tr>
+        <td>${r.eventMonthLabel||'—'}</td><td><b>${r.placa}</b></td><td>${r.modelo||'—'}</td>
+        <td class="mu">${r.lotacao||'—'}</td>
+        <td style="max-width:250px;white-space:normal;font-size:11px">${r.motivo||'Não informado'}</td>
+        <td class="mu">${dateBR(r.entrada)}</td><td class="mu">${dateBR(r.saida)}</td>
+        <td>${r.daysInShop!=null?`<b>${inti(r.daysInShop)}</b>`:'—'}</td>
+        <td><span class="tag ${r.saida?'w':'d'}">${r.saida?'Liberado':'Em oficina'}</span></td>
+      </tr>`).join('')||'<tr><td colspan="9" class="empty">Sem registros no filtro.</td></tr>'}
+      </tbody>
+    </table></div>
+  </div>
+  ${!fromSheets?guideHTML():''}`;
+
+  setTimeout(()=>{ animCount($('#kmT'),ev.length); animCount($('#kmO'),open); },80);
+}
+
+// ── SETUP GUIDE ──────────────────────────────────────────
+function guideHTML(){
+  return `<div class="guide">
+    <div class="guide-head">⚙️ Ativar dados de combustível ao vivo</div>
+    <div class="guide-sub">Os dados de manutenção já estão conectados à planilha COGERH em tempo real. Para ativar também o combustível, configure a aba abaixo.</div>
+    <div class="guide-grid">
+      <div class="guide-step">
+        <h4>📋 Aba "Combustivel" — planilha de combustíveis</h4>
+        <p>Na planilha <b>1wwSfGPBj4ygd...</b>, crie uma aba chamada <b>Combustivel</b> com esses cabeçalhos na linha 1:</p>
+        <ul>
+          <li><code>Mês</code> — número (1-12)</li>
+          <li><code>Label</code> — Jan, Fev, Mar...</li>
+          <li><code>Placa</code> — placa do veículo</li>
+          <li><code>Modelo</code> e <code>Família</code></li>
+          <li><code>Tipo Frota</code> — PROPRIA / LOCADA</li>
+          <li><code>Tipo Combustível</code></li>
+          <li><code>Litros</code> e <code>Km Rodados</code></li>
+          <li><code>Km/L</code> e <code>Total (R$)</code></li>
+        </ul>
+      </div>
+      <div class="guide-step">
+        <h4>🔒 Compartilhamento</h4>
+        <p>A planilha de combustíveis precisa ser pública para leitura:</p>
+        <ul>
+          <li>Abra a planilha → <b>Arquivo → Compartilhar</b></li>
+          <li>Clique em <b>"Qualquer pessoa com o link"</b></li>
+          <li>Permissão: <b>Visualizador</b></li>
+          <li>Salve e clique em <b>Atualizar</b> no painel</li>
+        </ul>
+        <p style="margin-top:8px;color:var(--cyan)">A manutenção já sincroniza automaticamente a cada ${REFRESH_S} segundos.</p>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── RERENDER ─────────────────────────────────────────────
+function rerender(){ renderFuel(); renderMaint(); }
+
+// ── TABS ─────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  $(`#sec-${btn.dataset.tab}`).classList.add('active');
+}));
+
+// ── FILTER LISTENERS ─────────────────────────────────────
+['#fMonth','#fPlate','#fDef'].forEach(s=>$(s).addEventListener('input',rerender));
+
+// ── COUNTDOWN ────────────────────────────────────────────
+function resetCD(){
+  cdVal=REFRESH_S; clearInterval(cdTimer);
+  cdTimer=setInterval(()=>{
+    cdVal--;
+    const el=$('#cdT'); if(el) el.textContent=cdVal+'s';
+    if(cdVal<=0) loadData();
+  },1000);
+}
+
+// ── INIT ─────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
