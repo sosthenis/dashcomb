@@ -249,10 +249,9 @@ code{background:rgba(0,180,216,.14);padding:1px 5px;border-radius:4px;font-size:
 <script>
 // ── CONFIG ──────────────────────────────────────────────
 const SCRIPT_URL     = 'https://script.google.com/macros/s/AKfycbyM3B_GG1Lc-_LPjFAdCY9ixSpa1lLPa8DVREHiAURDVclEd_pKoYOx5t7ybPqfQPEl/exec';
-const SHEET_ID       = '1wwSfGPBj4ygdMnZqrR_pr7-dLj5fO7SoeYT0xdDF7Lw';
-const SHEET_FUEL     = 'Combustivel';
-const MAINT_SHEET_ID = '1jPNFburs7qeOcCHwELg5tC6nROVUjEpc0SDz3BEUzY4';
-const MAINT_TABS     = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO',
+const FUEL_SHEET_ID  = '1wwSfGPBj4ygdMnZqrR_pr7-dLj5fO7SoeYT0xdDF7Lw'; // ALDO ANUAL frotas geope 2026
+const MAINT_SHEET_ID = '1jPNFburs7qeOcCHwELg5tC6nROVUjEpc0SDz3BEUzY4'; // RELAÇÃO DE VEÍCULOS NA OFICINA GEOPE 2026
+const MONTH_TABS     = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO',
                         'JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
 const REFRESH_S      = 60;
 
@@ -314,7 +313,7 @@ async function fetchSheetFrom(sheetId, name) {
   if(!Array.isArray(data)) throw new Error(data?.error || 'bad response');
   return data;
 }
-const fetchSheet = name => fetchSheetFrom(SHEET_ID, name);
+const fetchSheet = name => fetchSheetFrom(FUEL_SHEET_ID, name);
 
 // ── DATE PARSER ──────────────────────────────────────────
 function parseDate(v) {
@@ -339,20 +338,29 @@ function parseDate(v) {
   return isNaN(d)?null:d.toISOString().slice(0,10);
 }
 
-function txFuel(rows) {
-  return rows.filter(r=>r['Placa']||r['placa']).map(r=>({
-    month:           +( r['Mês']||r['Mes']||r['month']||0),
-    monthLabel:      r['Label']||r['monthLabel']||MOS[(+(r['Mês']||r['Mes']||1))-1]||'',
-    placa:           r['Placa']||r['placa']||'',
-    modelo:          r['Modelo']||r['modelo']||'',
-    familia:         r['Família']||r['Familia']||r['familia']||'',
-    tipoFrota:       r['Tipo Frota']||r['tipoFrota']||'',
-    tipoCombustivel: r['Tipo Combustível']||r['Combustivel']||r['tipoCombustivel']||'',
-    litros:          +(r['Litros']||r['litros']||0)||null,
-    kmRodados:       +(r['Km Rodados']||r['kmRodados']||0)||null,
-    kmPorLitro:      +(r['Km/L']||r['kmPorLitro']||0)||null,
-    total:           +(r['Total (R$)']||r['Total']||r['total']||0)||0,
-  }));
+function txFuelRow(r, month) {
+  const placa = (r['Placa']||r['PLACA']||'').trim();
+  if(!placa) return null;
+  return {
+    month, monthLabel: MOS[month-1]||'',
+    placa,
+    modelo:          (r['Modelo']      ||'').trim(),
+    familia:         (r['Família']     ||r['Familia']||'').trim(),
+    ano:             (r['Ano']         ||''),
+    marca:           (r['Marca']       ||'').trim(),
+    nrFrota:         (r['Nr.Frota']    ||''),
+    tipoFrota:       '',
+    tipoCombustivel: (r['Tipo Combustível']||r['Tipo Combustivel']||'').trim(),
+    cartao:          +(r['Cartão R$']  ||0)||0,
+    ultimaKm:        +(r['Última Km e/ou H']||0)||null,
+    kmRodados:       +(r['Km Rodados'] ||0)||null,
+    horasTrab:       +(r['Horas Trabalhadas']||0)||null,
+    litros:          +(r['Litros']     ||0)||null,
+    valorMedioLitro: +(r['Valor Médio (R$) Litro']||0)||null,
+    kmPorLitro:      +(r['Km por Litro']||0)||null,
+    litrosPorHora:   +(r['Litros/Hora']||0)||null,
+    total:           +(r['Total (R$) Transação']||r['Total (R$)']||0)||0,
+  };
 }
 
 function txMaintRow(r, month) {
@@ -403,52 +411,66 @@ async function loadData() {
   setStatus('loading','Buscando dados...');
   const btn=$('#rBtn'); btn.classList.add('spin'); $('#rLbl').textContent='Buscando...';
 
-  // Fuel: single tab from first spreadsheet
-  let fuel = [];
+  // ── Combustível: 12 abas mensais de "ALDO ANUAL frotas geope 2026"
+  let fuel = [], fuelOk = false;
   try {
-    const fRows = await fetchSheet(SHEET_FUEL);
-    fuel = txFuel(fRows);
-  } catch(e) { /* fuel sheet not ready — will use demo if maint also fails */ }
+    const fResults = await Promise.allSettled(
+      MONTH_TABS.map((tab, i) =>
+        fetchSheetFrom(FUEL_SHEET_ID, tab).then(rows => ({ rows, month: i+1 }))
+      )
+    );
+    const seenF = new Map();
+    fResults.forEach(r => {
+      if(r.status !== 'fulfilled') return;
+      const {rows, month} = r.value;
+      rows.forEach(row => {
+        const ev = txFuelRow(row, month);
+        if(!ev) return;
+        const key = `${ev.placa}|${month}|${ev.total}`;
+        if(!seenF.has(key)) { seenF.set(key, true); fuel.push(ev); }
+      });
+    });
+    if(fuel.length) fuelOk = true;
+  } catch(e) { /* fallback */ }
 
-  // Maintenance: all 12 monthly tabs from second spreadsheet, deduplicated
-  let maint = [];
-  let maintOk = false;
+  // ── Manutenção: 12 abas mensais de "RELAÇÃO DE VEÍCULOS NA OFICINA GEOPE 2026"
+  let maint = [], maintOk = false;
   try {
-    const results = await Promise.allSettled(
-      MAINT_TABS.map((tab, i) =>
+    const mResults = await Promise.allSettled(
+      MONTH_TABS.map((tab, i) =>
         fetchSheetFrom(MAINT_SHEET_ID, tab).then(rows => ({ rows, month: i+1 }))
       )
     );
-    const seen = new Map();
-    results.forEach(r => {
+    const seenM = new Map();
+    mResults.forEach(r => {
       if(r.status !== 'fulfilled') return;
       const {rows, month} = r.value;
       rows.forEach(row => {
         const ev = txMaintRow(row, month);
         if(!ev) return;
         const key = `${ev.placa}|${ev.entrada||''}`;
-        if(!seen.has(key)) { seen.set(key, true); maint.push(ev); }
+        if(!seenM.has(key)) { seenM.set(key, true); maint.push(ev); }
       });
     });
     if(maint.length) maintOk = true;
-  } catch(e) { /* fallback below */ }
+  } catch(e) { /* fallback */ }
 
-  if(!fuel.length && !maint.length) {
-    // Full demo mode
+  if(!fuelOk && !maintOk) {
     DATA={fuelRecords:DEMO_FUEL,maintenanceEvents:DEMO_MAINT,...buildAgg(DEMO_FUEL,DEMO_MAINT)};
     fromSheets=false;
-    setStatus('demo','Dados demo · configure a aba Combustivel na planilha');
-    $('#dSrc').textContent='Demonstração — configure a aba "Combustivel" na planilha de combustíveis';
+    setStatus('demo','Dados demo · verifique conexão com o Sheets');
+    $('#dSrc').textContent='Demonstração — verifique se as planilhas estão públicas';
   } else {
-    if(!fuel.length)  fuel  = DEMO_FUEL;
-    if(!maint.length) maint = DEMO_MAINT;
+    if(!fuelOk)  fuel  = DEMO_FUEL;
+    if(!maintOk) maint = DEMO_MAINT;
     DATA={fuelRecords:fuel,maintenanceEvents:maint,...buildAgg(fuel,maint)};
-    fromSheets = maintOk;
+    fromSheets = fuelOk || maintOk;
     const now=new Date().toLocaleString('pt-BR');
-    setStatus(maintOk?'live':'demo', maintOk?`Ao vivo · ${now}`:'Parcial — manutenção ao vivo, combustível em demo');
-    $('#dSrc').textContent = maintOk
-      ? `Google Sheets (tempo real) · ${maint.length} eventos de manutenção`
-      : 'Manutenção: Google Sheets · Combustível: configure aba "Combustivel"';
+    const src = fuelOk && maintOk ? 'Ao vivo'
+              : fuelOk ? 'Combustível ao vivo · Manutenção demo'
+              : 'Manutenção ao vivo · Combustível demo';
+    setStatus(fuelOk&&maintOk?'live':'demo', `${src} · ${now}`);
+    $('#dSrc').textContent=`Google Sheets · ${fuel.length} registros combustível · ${maint.length} eventos manutenção`;
   }
 
   initFilters(); rerender();
